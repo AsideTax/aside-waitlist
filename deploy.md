@@ -1,12 +1,13 @@
 # Deploy the Aside landing page
 
-This folder is a standalone static site — `index.html` + `og-image.png`, no build
-step. Any static host works. Netlify is the fastest.
+This folder is a standalone static site, with no build step: `index.html`, `og-image.png`,
+`logo.png`, `favicon.png`, `apple-touch-icon.png`, `app-estimate.webp`. Always deploy the
+**whole folder**; the page references all of them. Any static host works. Netlify is the fastest.
 
 ## Option A — Netlify Drop (fastest, ~2 minutes)
 1. Go to **https://app.netlify.com/drop**.
 2. Drag the **`marketing/landing`** folder onto the page (the whole folder, so
-   `index.html` and `og-image.png` upload together).
+   the page and its images upload together).
 3. You get a live HTTPS URL instantly, like `https://superb-otter-1234.netlify.app`.
 4. Create a free Netlify account when prompted to **keep** the site (otherwise it's
    temporary). In the site dashboard → **Site settings → Change site name** to
@@ -41,3 +42,12 @@ Remember to update the `YOUR-DOMAIN` meta tags again if you switch domains.
 - [ ] Share-preview card renders (opengraph.xyz).
 - [ ] Waitlist form submits → appears in Formspree (do one real test).
 - [ ] Founding survey submits → appears in Formspree with `type=founding-survey`.
+
+## Updating the live page (redesign of 2026-09-27)
+- **Netlify Drop site:** Netlify dashboard → your `aside-waitlist` site → **Deploys** → drag the
+  `marketing/landing` folder onto the deploy drop zone. The URL stays the same.
+- **Git-connected site:** commit and push; it redeploys automatically.
+- Test once after deploying: submit one real email and one survey, then confirm both appear
+  in Formspree (the form ID `xbdnqoyy` and every field name are unchanged).
+- `app-estimate.webp` is the real Estimate screen (status bar patched to 5G UW). Regenerate it
+  when the app screenshots are refreshed.
