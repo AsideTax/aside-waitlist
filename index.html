@@ -169,12 +169,38 @@
     .cta .trust{justify-content:center;}
     .cta .ok{margin-left:auto; margin-right:auto;}
 
+    .calclink{display:inline-block; margin-top:18px; color:var(--mint); font-weight:600; font-size:15px; text-decoration:none; border-bottom:1px dashed rgba(78,220,166,.5);}
+    #calc{padding:56px 0 24px;}
+    .calc{display:grid; grid-template-columns:1fr 1fr; gap:36px; background:var(--surface); border:1px solid var(--line); border-radius:24px; padding:36px; box-shadow:var(--shadow);}
+    .calcsub{color:var(--muted); margin-top:10px;}
+    .fields{display:grid; gap:14px; margin-top:22px;}
+    .fields label{display:grid; gap:6px; font-weight:600; font-size:14.5px;}
+    .fields input, .fields select{font:inherit; font-size:17px; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--paper); color:var(--ink); width:100%;}
+    .money{position:relative; display:block;}
+    .money::before{content:"$"; position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:17px;}
+    .money input{padding-left:28px;}
+    .result{background:var(--mint-soft); border-radius:18px; padding:26px; align-self:start;}
+    .rlabel{font-size:13px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--pine);}
+    .rnum{font-size:clamp(38px,5vw,52px); font-weight:700; letter-spacing:-.03em; line-height:1.1; margin-top:4px; font-variant-numeric:tabular-nums;}
+    .rper{color:var(--muted); font-weight:500;}
+    .rq{margin-top:10px; font-weight:600;}
+    .rbreak{margin:14px 0 0; display:grid; gap:4px; font-size:14px; color:var(--muted);}
+    .rbreak div{display:flex; justify-content:space-between; gap:12px; border-top:1px dashed var(--line); padding-top:4px;}
+    .rbreak dd{margin:0; font-variant-numeric:tabular-nums; color:var(--ink);}
+    .calcform{margin-top:18px;}
+    form.signup.calcform input[type=email]{background:var(--surface); border-color:#C9D6CE; color:var(--ink);}
+    form.signup.calcform input[type=email]::placeholder{color:var(--muted);}
+    #ok3{background:var(--surface); border-color:var(--pine); color:var(--pine);}
+    .fine{font-size:12.5px; color:var(--muted); margin-top:14px; line-height:1.5;}
+    @media (max-width:860px){ .calc{grid-template-columns:1fr; padding:24px; gap:24px;} }
+
     footer{border-top:1px solid var(--line); padding:34px 0 48px; color:var(--muted); font-size:13px;}
     footer .row{display:flex; gap:24px; justify-content:space-between; flex-wrap:wrap; align-items:flex-start;}
     footer .discl{max-width:70ch; line-height:1.65;}
     footer .by{display:flex; align-items:center; gap:8px; white-space:nowrap;}
     footer .by img{width:22px; height:22px; border-radius:6px;}
     footer .legal{margin-top:12px; opacity:.85;}
+    [hidden]{display:none !important;}
     .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
 
     @media (max-width:860px){
@@ -196,7 +222,7 @@
   <header class="shell">
     <div class="bar">
       <a class="brand" href="#"><img src="logo.png" alt="" width="40" height="40" />Aside</a>
-      <span class="soon">Launching soon</span>
+      <span class="soon" id="launchLabel">Launching soon</span>
     </div>
   </header>
 
@@ -204,7 +230,7 @@
     <div class="shell">
       <div class="hero">
         <div class="hero-copy">
-          <div class="founding">🔑 First 50 founding members lock in&nbsp;<b>$9.99/quarter for life</b></div>
+          <div class="founding" id="foundingPill">🔑 First 50 founding members lock in&nbsp;<b>$9.99/quarter for life</b></div>
           <h1>Never get blindsided by a <em>tax bill</em> again.</h1>
           <p class="sub">Aside turns your trips, miles, and expenses into one number: exactly what to set aside for quarterly taxes. Plus a reminder before every deadline.</p>
 
@@ -221,6 +247,7 @@
             <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#4EDCA6" opacity=".22"/><path d="M4.5 8.2l2.2 2.2 4.8-4.8" stroke="#4EDCA6" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>No spam</li>
           </ul>
           <div class="ok" id="ok1" role="status">You're on the list. 🌿 One quick step to claim a founding spot ↓</div>
+          <a class="calclink" href="#calc">Not sure what to save? Get a rough number now ↓</a>
         </div>
 
         <div class="device">
@@ -237,6 +264,58 @@
         <span class="chip">Uber</span><span class="chip">Lyft</span><span class="chip">DoorDash</span><span class="chip">Instacart</span><span class="chip">Amazon Flex</span>
       </div>
     </div>
+
+    <!-- Set-aside calculator: instant value before the ask. Mirrors the app's v1 formula
+         (lib/tax-calc.ts) but shows a RANGE across the 10–22% brackets and skips the standard
+         deduction, so it errs high. Not CPA-validated yet — keep the "rough estimate" wording. -->
+    <section id="calc">
+      <div class="shell">
+        <div class="calc">
+          <div>
+            <p class="eyebrow">Set-aside calculator</p>
+            <h2 class="h2">What should you set aside this week?</h2>
+            <p class="calcsub">A rough number in 10 seconds. The app does this automatically from your real trips.</p>
+            <div class="fields">
+              <label>Gig earnings this week
+                <span class="money"><input id="cEarn" type="number" inputmode="decimal" min="0" step="1" placeholder="900" /></span>
+              </label>
+              <label>Business miles this week
+                <input id="cMiles" type="number" inputmode="decimal" min="0" step="1" placeholder="420" />
+              </label>
+              <label>Your income-tax bracket
+                <select id="cBracket">
+                  <option value="">Not sure (show a range)</option>
+                  <option value="0.10">10%</option><option value="0.12">12%</option>
+                  <option value="0.22">22%</option><option value="0.24">24%</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="result" aria-live="polite">
+            <p class="rlabel">Set aside about</p>
+            <p class="rnum" id="cWeek">$—</p>
+            <p class="rper">per week</p>
+            <p class="rq" id="cQuarter">Enter your earnings and miles.</p>
+            <dl class="rbreak" id="cBreak" hidden>
+              <div><dt>Mileage deduction</dt><dd id="cDed"></dd></div>
+              <div><dt>Self-employment tax</dt><dd id="cSE"></dd></div>
+              <div><dt>Income tax</dt><dd id="cIT"></dd></div>
+            </dl>
+            <form class="signup calcform" id="form3" action="https://formspree.io/f/xbdnqoyy" method="POST" novalidate>
+              <input type="email" name="email" required placeholder="you@email.com" aria-label="Email address" autocomplete="email" />
+              <input type="hidden" name="type" value="waitlist" />
+              <input type="hidden" name="source" value="calculator" />
+              <input type="hidden" name="calc_weekly_estimate" id="cHidden" />
+              <input type="hidden" name="_subject" value="New Aside waitlist signup (calculator)" />
+              <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" /><input type="hidden" name="utm_source" /><input type="hidden" name="utm_medium" /><input type="hidden" name="utm_campaign" /><input type="hidden" name="utm_content" />
+              <button type="submit" class="btn">Remind me before <span class="nextdue">the deadline</span></button>
+            </form>
+            <div class="ok" id="ok3" role="status">Done. We'll remind you before <span class="nextdue">the deadline</span>. 🌿 Want the founding price too? ↓</div>
+            <p class="fine">Rough, conservative estimate: it ignores the standard deduction, credits, and other household income, so your real number may be lower. Uses the IRS standard mileage rate (<span id="cRate">76¢</span>/mile). Not tax advice.</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- Founding-member survey: revealed after an email is submitted. -->
     <section class="survey-wrap" id="survey" hidden>
@@ -395,7 +474,7 @@
         <p class="discl"><strong>Aside provides estimates, not tax advice.</strong> Figures shown are illustrative and are not a guaranteed or filing-ready amount. Confirm your taxes with a qualified professional. Founding price is redeemable at launch and applies for as long as the subscription stays active; limited to the first 50 survey-completing members.</p>
         <p class="by"><img src="logo.png" alt="" width="22" height="22" />Aside is a product of Norris Labs, LLC</p>
       </div>
-      <p class="legal">Not affiliated with or endorsed by Uber, Lyft, DoorDash, Instacart, or Amazon Flex. © <span id="yr">2026</span> Norris Labs, LLC. All rights reserved.</p>
+      <p class="legal">Not affiliated with or endorsed by Uber, Lyft, DoorDash, Instacart, or Amazon Flex. © <span id="yr">2026</span> Norris Labs, LLC. All rights reserved.<span id="pixelNote" hidden> This page uses a Meta pixel to measure our ads.</span></p>
     </div>
   </footer>
 
@@ -409,8 +488,40 @@
     Formspree free tier is ~50 submissions/mo; each founder = 2 (email + survey).
   -->
   <script>
+    // ---- Page settings: edit these, then redeploy ------------------------------------
+    var CONFIG = {
+      META_PIXEL_ID: '',                    // Meta Events Manager → your pixel's ID (digits). Empty = no pixel.
+      LAUNCH_LABEL: 'Launching November 2026',
+      FOUNDING_CLAIMED: 0,                  // update from Formspree (founding-survey count)
+      FOUNDING_TOTAL: 50,
+      SHOW_COUNT_FROM: 5,                   // hide the count until it's worth showing
+      // IRS standard mileage rate, date-aware (2026 had a mid-year change). Add new rows; never edit old ones.
+      MILEAGE_RATES: [{from:'2026-01-01', rate:0.725}, {from:'2026-07-01', rate:0.76}]
+    };
+    // -----------------------------------------------------------------------------------
+
+    // Meta pixel (standard snippet) — only when an ID is set.
+    function track(){ if (window.fbq) fbq.apply(null, arguments); }
+    if (/^\d{8,20}$/.test(CONFIG.META_PIXEL_ID)) {
+      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+      document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', CONFIG.META_PIXEL_ID); fbq('track', 'PageView');
+      document.getElementById('pixelNote').hidden = false;
+    }
+
     (function(){
       var lastEmail='';
+
+      var ll=document.getElementById('launchLabel'); if (ll && CONFIG.LAUNCH_LABEL) ll.textContent=CONFIG.LAUNCH_LABEL;
+      if (CONFIG.FOUNDING_CLAIMED >= CONFIG.SHOW_COUNT_FROM) {
+        var left = Math.max(0, CONFIG.FOUNDING_TOTAL - CONFIG.FOUNDING_CLAIMED);
+        document.getElementById('foundingPill').innerHTML = left > 0
+          ? '🔑 ' + CONFIG.FOUNDING_CLAIMED + ' of ' + CONFIG.FOUNDING_TOTAL + ' founding spots claimed · <b>$9.99/quarter for life</b>'
+          : '🔑 Founding spots are full. Join the waitlist for launch.';
+      }
 
       // Carry UTM params from the ad link into every form, so each Formspree
       // submission is stamped with the source (facebook / paid_social / founding …).
@@ -427,8 +538,43 @@
           if (d < today) d.setFullYear(d.getFullYear()+1);
           if (!bestDt || d < bestDt){ bestDt=d; best=el; }
         });
-        if (best) best.classList.add('next');
+        if (best) {
+          best.classList.add('next');
+          var lbl = best.querySelector('.dt').textContent;          // e.g. "Jan 15"
+          document.querySelectorAll('.nextdue').forEach(function(el){ el.textContent = lbl; });
+        }
         var yr=document.getElementById('yr'); if (yr) yr.textContent=now.getFullYear();
+      })();
+
+      // Set-aside calculator — same v1 formula as the app, shown as a range. Errs high.
+      (function(){
+        var earn=document.getElementById('cEarn'), miles=document.getElementById('cMiles'), br=document.getElementById('cBracket');
+        if (!earn) return;
+        var today=new Date().toISOString().slice(0,10), rate=CONFIG.MILEAGE_RATES[0].rate;
+        CONFIG.MILEAGE_RATES.forEach(function(r){ if (r.from <= today) rate=r.rate; });
+        document.getElementById('cRate').textContent = (rate*100).toFixed(rate*100 % 1 ? 1 : 0) + '¢';
+        var usd=function(n){ return '$' + Math.round(n).toLocaleString('en-US'); };
+        var range=function(a,b){ return Math.round(a)===Math.round(b) ? usd(a) : usd(a) + '–' + usd(b).slice(1); };
+        var used=false;
+        function calc(){
+          var g=parseFloat(earn.value)||0, m=parseFloat(miles.value)||0;
+          var out=document.getElementById('cWeek'), q=document.getElementById('cQuarter'), bd=document.getElementById('cBreak');
+          if (g<=0){ out.textContent='$—'; q.textContent='Enter your earnings and miles.'; bd.hidden=true; return; }
+          var ded=Math.min(g, m*rate), net=Math.max(0, g-ded);
+          var se = net*52*0.9235 >= 400 ? net*0.9235*0.153 : 0;  // Schedule SE: 92.35% × 15.3%; $400 test on adjusted earnings (as lib/tax-calc.ts)
+          var base = Math.max(0, net - se/2);                     // ½ SE tax is deductible for income tax
+          var lo = br.value ? +br.value : 0.10, hi = br.value ? +br.value : 0.22;
+          var tLo = se + base*lo, tHi = se + base*hi;
+          out.textContent = range(tLo, tHi);
+          q.textContent = '≈ ' + range(tLo*13, tHi*13) + ' for the quarter (13 weeks)';
+          document.getElementById('cDed').textContent = '−' + usd(ded);
+          document.getElementById('cSE').textContent = usd(se);
+          document.getElementById('cIT').textContent = range(base*lo, base*hi);
+          bd.hidden=false;
+          document.getElementById('cHidden').value = range(tLo, tHi) + '/wk';
+          if (!used){ used=true; track('trackCustom', 'CalculatorUsed'); }
+        }
+        [earn, miles, br].forEach(function(el){ el.addEventListener('input', calc); });
       })();
 
       function fail(ok){ ok.textContent='Something went wrong — please try again.'; ok.classList.add('show'); }
@@ -448,7 +594,7 @@
           if(!input.value || input.value.indexOf('@')<1){ input.focus(); return; }
           lastEmail=input.value;
           var action=f.getAttribute('action')||'';
-          var done=function(){ f.style.display='none'; ok.classList.add('show'); revealSurvey(); };
+          var done=function(){ f.style.display='none'; ok.classList.add('show'); track('track','Lead',{content_name:formId}); revealSurvey(); };
           if(!action || action.indexOf('YOUR_FORM_ID')!==-1){ done(); return; }
           post(f).then(function(res){ res.ok?done():fail(ok); }).catch(function(){ fail(ok); });
         });
@@ -458,13 +604,13 @@
         if(!f) return;
         f.addEventListener('submit', function(e){
           e.preventDefault();
-          var done=function(){ f.style.display='none'; ok.classList.add('show'); ok.scrollIntoView({behavior:'smooth',block:'center'}); };
+          var done=function(){ f.style.display='none'; ok.classList.add('show'); track('track','CompleteRegistration'); ok.scrollIntoView({behavior:'smooth',block:'center'}); };
           var action=f.getAttribute('action')||'';
           if(!action || action.indexOf('YOUR_FORM_ID')!==-1){ done(); return; }
           post(f).then(function(res){ res.ok?done():fail(ok); }).catch(function(){ fail(ok); });
         });
       }
-      wireEmail('form1','ok1'); wireEmail('form2','ok2'); wireSurvey();
+      wireEmail('form1','ok1'); wireEmail('form2','ok2'); wireEmail('form3','ok3'); wireSurvey();
     })();
   </script>
 </body>
