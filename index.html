@@ -23,7 +23,8 @@
   <meta name="theme-color" content="#08402F" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@500;600&display=swap" rel="stylesheet" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Caveat:wght@500;600&display=swap" /></noscript>
   <style>
     :root{
       --paper:#F2F4EF; --surface:#FFFFFF; --ink:#0C1A14; --muted:#56695F; --line:#E0E6DF;
@@ -201,6 +202,13 @@
     footer .by img{width:22px; height:22px; border-radius:6px;}
     footer .legal{margin-top:12px; opacity:.85;}
     [hidden]{display:none !important;}
+    .ferr{display:none; margin:10px 0 0; font-size:14.5px; font-weight:600; color:#FFC2B6;}
+    .ferr.show{display:block;}
+    form.signup input.invalid{border-color:#FF8A75 !important; box-shadow:0 0 0 2px rgba(255,138,117,.35);}
+    #calc .ferr{color:#B4432F;}
+    :root[data-theme="dark"] #calc .ferr{color:#F08A78;}
+    @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]) #calc .ferr{color:#F08A78;} }
+    .btn[disabled]{opacity:.7; cursor:wait;}
     .sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
 
     @media (max-width:860px){
@@ -241,6 +249,7 @@
             <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" /><input type="hidden" name="utm_source" /><input type="hidden" name="utm_medium" /><input type="hidden" name="utm_campaign" /><input type="hidden" name="utm_content" />
             <button type="submit" class="btn mint">Join the waitlist</button>
           </form>
+          <p class="ferr" id="err1" role="alert" aria-live="polite"></p>
           <ul class="trust">
             <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#4EDCA6" opacity=".22"/><path d="M4.5 8.2l2.2 2.2 4.8-4.8" stroke="#4EDCA6" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Free to start</li>
             <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="8" fill="#4EDCA6" opacity=".22"/><path d="M4.5 8.2l2.2 2.2 4.8-4.8" stroke="#4EDCA6" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>No card needed</li>
@@ -310,6 +319,7 @@
               <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" /><input type="hidden" name="utm_source" /><input type="hidden" name="utm_medium" /><input type="hidden" name="utm_campaign" /><input type="hidden" name="utm_content" />
               <button type="submit" class="btn">Remind me before <span class="nextdue">the deadline</span></button>
             </form>
+            <p class="ferr" id="err3" role="alert" aria-live="polite"></p>
             <div class="ok" id="ok3" role="status">Done. We'll remind you before <span class="nextdue">the deadline</span>. 🌿 Want the founding price too? ↓</div>
             <p class="fine">Rough, conservative estimate: it ignores the standard deduction, credits, and other household income, so your real number may be lower. Uses the IRS standard mileage rate (<span id="cRate">76¢</span>/mile). Not tax advice.</p>
           </div>
@@ -462,6 +472,7 @@
           <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" /><input type="hidden" name="utm_source" /><input type="hidden" name="utm_medium" /><input type="hidden" name="utm_campaign" /><input type="hidden" name="utm_content" />
           <button type="submit" class="btn mint">Join the waitlist</button>
         </form>
+        <p class="ferr" id="err2" role="alert" aria-live="polite"></p>
         <ul class="trust"><li>Founding spots (first 50) lock in $9.99/quarter for life</li><li>No spam</li></ul>
         <div class="ok" id="ok2" role="status">You're on the list. 🌿 Scroll up to claim a founding spot ↑</div>
       </div>
@@ -611,18 +622,34 @@
         s.scrollIntoView({behavior:'smooth', block:'start'});
       }
       function post(f){ return fetch(f.getAttribute('action'),{method:'POST',body:new FormData(f),headers:{Accept:'application/json'}}); }
+      var EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
       function wireEmail(formId, okId){
         var f=document.getElementById(formId), ok=document.getElementById(okId);
+        var err=document.getElementById('err'+formId.slice(-1));
         if(!f) return;
+        var input=f.querySelector('input[type=email]'), btn=f.querySelector('button[type=submit]'), label=btn.innerHTML;
+        function showErr(msg, kind){
+          if(err){ err.textContent=msg; err.classList.add('show'); }
+          input.classList.add('invalid'); input.setAttribute('aria-invalid','true'); input.focus();
+          cevent('email_'+kind);
+        }
+        input.addEventListener('input', function(){
+          if(err) err.classList.remove('show');
+          input.classList.remove('invalid'); input.removeAttribute('aria-invalid');
+        });
         f.addEventListener('submit', function(e){
           e.preventDefault();
-          var input=f.querySelector('input[type=email]');
-          if(!input.value || input.value.indexOf('@')<1){ input.focus(); return; }
-          lastEmail=input.value;
+          var v=input.value.trim(); input.value=v;
+          if(!v){ showErr('Enter your email to join the waitlist.', 'empty'); return; }
+          if(!EMAIL_RE.test(v)){ showErr('That email doesn’t look right. Check for a typo?', 'invalid'); return; }
+          lastEmail=v;
           var action=f.getAttribute('action')||'';
-          var done=function(){ f.style.display='none'; ok.classList.add('show'); track('track','Lead',{content_name:formId}); cevent('waitlist_signup_'+formId); ttrack('SubmitForm', {content_name: formId}); revealSurvey(); };
+          var done=function(){ f.style.display='none'; if(err) err.classList.remove('show'); ok.classList.add('show'); track('track','Lead',{content_name:formId}); cevent('waitlist_signup_'+formId); ttrack('SubmitForm', {content_name: formId}); revealSurvey(); };
+          var reset=function(){ btn.disabled=false; btn.innerHTML=label; };
           if(!action || action.indexOf('YOUR_FORM_ID')!==-1){ done(); return; }
-          post(f).then(function(res){ res.ok?done():fail(ok); }).catch(function(){ fail(ok); });
+          btn.disabled=true; btn.textContent='Sending…';
+          post(f).then(function(res){ if(res.ok){ done(); } else { reset(); fail(ok); } })
+                 .catch(function(){ reset(); fail(ok); });
         });
       }
       function wireSurvey(){
