@@ -474,7 +474,7 @@
         <p class="discl"><strong>Aside provides estimates, not tax advice.</strong> Figures shown are illustrative and are not a guaranteed or filing-ready amount. Confirm your taxes with a qualified professional. Founding price is redeemable at launch and applies for as long as the subscription stays active; limited to the first 50 survey-completing members.</p>
         <p class="by"><img src="logo.png" alt="" width="22" height="22" />Aside is a product of Norris Labs, LLC</p>
       </div>
-      <p class="legal">Not affiliated with or endorsed by Uber, Lyft, DoorDash, Instacart, or Amazon Flex. © <span id="yr">2026</span> Norris Labs, LLC. All rights reserved.<span id="pixelNote" hidden> This page uses a Meta pixel to measure our ads.</span><span id="clarityNote" hidden> We use Microsoft Clarity to see how visitors use this page (anonymised; email fields are never recorded).</span></p>
+      <p class="legal">Not affiliated with or endorsed by Uber, Lyft, DoorDash, Instacart, or Amazon Flex. © <span id="yr">2026</span> Norris Labs, LLC. All rights reserved.<span id="pixelNote" hidden> This page uses a Meta pixel to measure our ads.</span><span id="tiktokNote" hidden> This page uses the TikTok pixel to measure our ads.</span><span id="clarityNote" hidden> We use Microsoft Clarity to see how visitors use this page (anonymised; email fields are never recorded).</span></p>
     </div>
   </footer>
 
@@ -491,6 +491,7 @@
     // ---- Page settings: edit these, then redeploy ------------------------------------
     var CONFIG = {
       META_PIXEL_ID: '',                    // Meta Events Manager → your pixel's ID (digits). Empty = no pixel.
+      TIKTOK_PIXEL_ID: 'DAVHVV3C77UF3I06JDSG',  // TikTok Events Manager → "Aside – Waitlist Site". Empty = off.
       CLARITY_ID: 'yr7ymp03rc',                       // Microsoft Clarity → Settings → Setup → project ID. Empty = off.
       LAUNCH_LABEL: 'Launching November 2026',
       FOUNDING_CLAIMED: 0,                  // update from Formspree (founding-survey count)
@@ -510,6 +511,19 @@
       y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,'clarity','script',CONFIG.CLARITY_ID);
       new URLSearchParams(location.search).forEach(function(v,k){ if (k.indexOf('utm_')===0 && v) clarity('set', k, v); });
       document.getElementById('clarityNote').hidden = false;
+    }
+
+    // TikTok pixel (standard base code) — only when an ID is set.
+    function ttrack(name, params){ if (window.ttq && window.ttq.track) ttq.track(name, params || {}); }
+    if (/^[A-Z0-9]{10,30}$/.test(CONFIG.TIKTOK_PIXEL_ID)) {
+      !function (w, d, t) {
+        w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(
+        var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var r="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=r,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script")
+        ;n.type="text/javascript",n.async=!0,n.src=r+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
+        ttq.load(CONFIG.TIKTOK_PIXEL_ID);
+        ttq.page();
+      }(window, document, 'ttq');
+      document.getElementById('tiktokNote').hidden = false;
     }
 
     // Meta pixel (standard snippet) — only when an ID is set.
@@ -584,7 +598,7 @@
           document.getElementById('cIT').textContent = range(base*lo, base*hi);
           bd.hidden=false;
           document.getElementById('cHidden').value = range(tLo, tHi) + '/wk';
-          if (!used){ used=true; track('trackCustom', 'CalculatorUsed'); cevent('calculator_used'); }
+          if (!used){ used=true; track('trackCustom', 'CalculatorUsed'); cevent('calculator_used'); ttrack('ViewContent', {content_name: 'calculator'}); }
         }
         [earn, miles, br].forEach(function(el){ el.addEventListener('input', calc); });
       })();
@@ -606,7 +620,7 @@
           if(!input.value || input.value.indexOf('@')<1){ input.focus(); return; }
           lastEmail=input.value;
           var action=f.getAttribute('action')||'';
-          var done=function(){ f.style.display='none'; ok.classList.add('show'); track('track','Lead',{content_name:formId}); cevent('waitlist_signup_'+formId); revealSurvey(); };
+          var done=function(){ f.style.display='none'; ok.classList.add('show'); track('track','Lead',{content_name:formId}); cevent('waitlist_signup_'+formId); ttrack('SubmitForm', {content_name: formId}); revealSurvey(); };
           if(!action || action.indexOf('YOUR_FORM_ID')!==-1){ done(); return; }
           post(f).then(function(res){ res.ok?done():fail(ok); }).catch(function(){ fail(ok); });
         });
@@ -616,7 +630,7 @@
         if(!f) return;
         f.addEventListener('submit', function(e){
           e.preventDefault();
-          var done=function(){ f.style.display='none'; ok.classList.add('show'); track('track','CompleteRegistration'); cevent('survey_complete'); ok.scrollIntoView({behavior:'smooth',block:'center'}); };
+          var done=function(){ f.style.display='none'; ok.classList.add('show'); track('track','CompleteRegistration'); cevent('survey_complete'); ttrack('CompleteRegistration'); ok.scrollIntoView({behavior:'smooth',block:'center'}); };
           var action=f.getAttribute('action')||'';
           if(!action || action.indexOf('YOUR_FORM_ID')!==-1){ done(); return; }
           post(f).then(function(res){ res.ok?done():fail(ok); }).catch(function(){ fail(ok); });
