@@ -202,6 +202,8 @@
     footer .by img{width:22px; height:22px; border-radius:6px;}
     footer .legal{margin-top:12px; opacity:.85;}
     [hidden]{display:none !important;}
+    body.calc-first #calc{padding-top:8px;}
+    body.calc-first .hero{margin-top:8px;}
     .ferr{display:none; margin:10px 0 0; font-size:14.5px; font-weight:600; color:#FFC2B6;}
     .ferr.show{display:block;}
     form.signup input.invalid{border-color:#FF8A75 !important; box-shadow:0 0 0 2px rgba(255,138,117,.35);}
@@ -551,6 +553,18 @@
 
     (function(){
       var lastEmail='';
+
+      // Calculator-first layout for visitors from the calculator ad (?start=calc or
+      // utm_campaign=calculator): the ad promises a calculator, so show it first.
+      (function(){
+        var q=new URLSearchParams(location.search);
+        if (q.get('start')!=='calc' && q.get('utm_campaign')!=='calculator') return;
+        var calc=document.getElementById('calc'), main=document.querySelector('main');
+        if (!calc || !main) return;
+        main.insertBefore(calc, main.firstElementChild);
+        document.body.classList.add('calc-first');
+        cevent('layout_calc_first');
+      })();
 
       var ll=document.getElementById('launchLabel'); if (ll && CONFIG.LAUNCH_LABEL) ll.textContent=CONFIG.LAUNCH_LABEL;
       if (CONFIG.FOUNDING_CLAIMED >= CONFIG.SHOW_COUNT_FROM) {
